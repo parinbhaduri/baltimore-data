@@ -1,0 +1,28 @@
+Call:
+lm(formula = MedianSalesPriceAmount ~ N_MeanSqfeet + N_MeanAge + 
+    N_MeanNoOfStories + N_MeanFullBathNumber, data = price)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-226343  -26921   -5211   21989  209007 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(>|t|)    
+(Intercept)           -121428       8006 -15.167  < 2e-16 ***
+N_MeanSqfeet           294707      22536  13.077  < 2e-16 ***
+N_MeanAge              130553      12413  10.517  < 2e-16 ***
+N_MeanNoOfStories      128990      12802  10.076  < 2e-16 ***
+N_MeanFullBathNumber   154887      20096   7.707 3.08e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 51600 on 1002 degrees of freedom
+Multiple R-squared:  0.7247,	Adjusted R-squared:  0.7236 
+F-statistic: 659.3 on 4 and 1002 DF,  p-value: < 2.2e-16
+
+  Df       Sum Sq      Mean Sq    F value        Pr(>F) PercentExplained
+N_MeanSqfeet            1 5.601424e+12 5.601424e+12 2103.45057 2.323172e-248        57.798732
+N_MeanAge               1 1.061118e+12 1.061118e+12  398.47172  6.676339e-75        10.949228
+N_MeanNoOfStories       1 2.022297e+11 2.022297e+11   75.94145  1.192536e-17         2.086723
+N_MeanFullBathNumber    1 1.581909e+11 1.581909e+11   59.40395  3.082580e-14         1.632305
+Residuals            1002 2.668295e+12 2.662969e+09         NA            NA        27.533012
