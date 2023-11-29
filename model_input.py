@@ -9,11 +9,11 @@ flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see p
 housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
 hedonic_filename = 'simple_anova_hedonic_without_flood_bg0418.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
-bg = gpd.read_file('/data_inputs/' + geo_filename)
-pop = pd.read_csv('/data_inputs/' + pop_filename)
-flood = pd.read_csv('/data_inputs/' + flood_filename)
-housing = pd.read_csv('/data_inputs/' + housing_filename)
-hedonic = pd.read_csv('/data_inputs/' + hedonic_filename)
+bg = gpd.read_file('data_inputs/' + geo_filename)
+pop = pd.read_csv('data_inputs/' + pop_filename)
+flood = pd.read_csv('data_inputs/' + flood_filename)
+housing = pd.read_csv('data_inputs/' + housing_filename)
+hedonic = pd.read_csv('data_inputs/' + hedonic_filename)
 
 # join census/population data to block groups
 bg = pd.merge(bg, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
@@ -56,5 +56,9 @@ for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic r
 # initialize new price for updating
 bg['new_price'] = bg['salesprice1993']
 
+#add centroid postions to df
+bg["x"] = bg.geometry.centroid.x
+bg["y"] = bg.geometry.centroid.y
+
 #Save Dataframe to CSV File
-bg.to_csv('/model_inputs/bg_baltimore.csv')
+bg.to_csv('model_inputs/bg_baltimore.csv')
