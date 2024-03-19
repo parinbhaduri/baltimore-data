@@ -25,9 +25,9 @@ function load_data(fname)
     df = @chain fname begin
         CSV.File(; header = true)
         DataFrame
-        rename("MHHW" => "gauge")
+        #rename("MHHW" => "gauge")
         @transform :datetime = DateTime.(:year, :month)
-        select(:datetime, :gauge)
+        select(:datetime, :highest, :MSL)
     end
     return df
 end
@@ -35,16 +35,18 @@ end
 #t_dat = DataFrame(CSV.File(filepath; header = true))
 dat = load_data(filepath)
 
-tide_plt = @df dat plot(:datetime, :gauge, label = "Observations")
+tide_plt = @df dat plot(:datetime, [:highest :MSL], label = ["highest" "MSL"])
+yaxis!(tide_plt, "Water Level (meters)")
 
 ## Detrend to remove sea-level rise
 ma_length = 13
 ma_offset = Int(floor(ma_length/2))
 moving_average(series, n) = [mean(@view series[i-n:i+n]) for i in n+1:length(series) - n]
 
-dat_ma = DataFrame(datetime=dat.datetime[ma_offset+1:end-ma_offset], residual = dat.gauge[ma_offset+1:end-ma_offset] .- moving_average(dat.gauge, ma_offset))
+dat_ma = DataFrame(datetime=dat.datetime[ma_offset+1:end-ma_offset], residual = dat.highest[ma_offset+1:end-ma_offset] .- moving_average(dat.MSL, ma_offset), MSL = dat.MSL[ma_offset+1:end-ma_offset] .- moving_average(dat.MSL, ma_offset))
 
-tide_plt = @df dat_ma plot(:datetime, :residual, label = "Observations")
+tide_plt = @df dat_ma plot(:datetime, [:residual :MSL], label = ["Observations" "De-trended MSL"])
+yaxis!(tide_plt, "Water Level (meters)")
 
 ##Fit GEV Distributions
 #Calculate annual maxima
@@ -59,3 +61,9 @@ fm = gevfit(dat_annmax, :residual)
 params(fm)
 
 diagnosticplots(fm)
+
+dense_plot = histplot(fm)
+
+
+## Determine Return Levels from GEV 
+returnlevel(fm, 100).value[]
