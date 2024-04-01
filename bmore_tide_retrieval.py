@@ -7,14 +7,14 @@ import async_retriever as ar
 
 station_id = "8574680"
 start = pd.to_datetime("1902-01-01")
-end = pd.to_datetime("2024-01-01")
+end = pd.to_datetime("2023-12-01")
 
 url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
 
 kwd = {
     "params": {
         "product": "monthly_mean",
-        "application": "web_services",
+        "application": "parin_cornell",
         "begin_date": f'{start.strftime("%Y%m%d")}',
         "end_date": f'{end.strftime("%Y%m%d")}',
         "datum": "MSL",

@@ -64,6 +64,51 @@ diagnosticplots(fm)
 
 dense_plot = histplot(fm)
 
+#using Gadfly, Cairo, Fontconfig
+
+#image = PNG("gev_hist_balt.png",6inch,4inch)
+#draw(image, dense_plot)
 
 ## Determine Return Levels from GEV 
-returnlevel(fm, 100).value[]
+return_periods = collect(range(10,1000,step=10))
+
+return_levels = [returnlevel.(Ref(fm), rp).value[] for rp in return_periods]
+
+using Plots
+
+ret_level_plt = plot(return_periods, return_levels, legend = false)
+xaxis!(ret_level_plt, "Return period (yrs^-1)")
+yaxis!(ret_level_plt, "Return level (meters)")
+
+
+##Create histogram to see what bins GEV samples would fill
+GEV_d = GeneralizedExtremeValue(location(fm)[1], Extremes.scale(fm)[1], shape(fm)[1])
+
+#Sample from GEV and return flood depth 
+
+function GEV_event(rng;
+    d = GEV_d) #input GEV distribution 
+    flood_depth = rand(rng, d)
+    return flood_depth
+end
+
+gev_rng = MersenneTwister(1897)
+flood_record = [GEV_event(gev_rng) for _ in 1:1000]
+#Group flood depths into regular intervals
+round_step(x, step) = round(x / step) * step
+#flood_record = round_step.(flood_record, 0.25)
+
+#Define Function to calculate return period from return level
+function GEV_rp(z_p, mu = μ, sig = σ, xi = ξ)
+    y_p = 1 + (xi * ((z_p - mu)/sig))
+    rp = -exp(-y_p^(-1/xi)) + 1
+    rp = round(rp, digits = 3)
+    return 1/rp
+end
+
+#Convert flood intervals to corresponding return periods 
+#event_rps = [GEV_rp(record, location(fm)[1], Extremes.scale(fm)[1], shape(fm)[1]) for record in flood_record]
+histogram(event_rps; bins = 10:10:1000,xaxis=(:log10, (1, 1000)))
+
+histogram(flood_record; bins = 0:0.25:4)
+
