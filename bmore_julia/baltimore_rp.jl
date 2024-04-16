@@ -18,7 +18,7 @@ using Extremes
 Random.seed!(1);
 
 ##Load Data
-filepath = joinpath(dirname(@__DIR__),"flood_inputs","bmore_monthly_mean.csv")
+filepath = joinpath(dirname(@__DIR__),"flood_inputs","NOAA_WL","bmore_monthly_mean.csv")
 
 function load_data(fname)
     date_format = DateFormat("yyyy-mm")
@@ -76,7 +76,7 @@ return_levels = [returnlevel.(Ref(fm), rp).value[] for rp in return_periods]
 
 using Plots
 
-ret_level_plt = plot(return_periods, return_levels, legend = false)
+ret_level_plt = plot(return_periods, return_levels, xticks = 0:50:1000, yticks = 0:0.25:4,legend = false)
 xaxis!(ret_level_plt, "Return period (yrs^-1)")
 yaxis!(ret_level_plt, "Return level (meters)")
 
@@ -94,6 +94,11 @@ end
 
 gev_rng = MersenneTwister(1897)
 flood_record = [GEV_event(gev_rng) for _ in 1:1000]
+
+#Sea Level Rise (Uncomment if adding SLR to surge levels)
+#high scenario of SL change projection for 2031 is 0.28m and 2.57m for 2130 (NOAA)
+high_slr = repeat([0.022 * i for i in 1:50], 20) 
+flood_record = flood_record .+ high_slr
 #Group flood depths into regular intervals
 round_step(x, step) = round(x / step) * step
 #flood_record = round_step.(flood_record, 0.25)
@@ -106,9 +111,13 @@ function GEV_rp(z_p, mu = μ, sig = σ, xi = ξ)
     return 1/rp
 end
 
-#Convert flood intervals to corresponding return periods 
-#event_rps = [GEV_rp(record, location(fm)[1], Extremes.scale(fm)[1], shape(fm)[1]) for record in flood_record]
-histogram(event_rps; bins = 10:10:1000,xaxis=(:log10, (1, 1000)))
+#Count number of occurences of each surge event  
+surge_freq = hcat([[i, count(==(i), round_step.(flood_record,0.25))] for i in unique(round_step.(flood_record,0.25))]...)
 
-histogram(flood_record; bins = 0:0.25:4)
+surge_interval = bar(surge_freq[1,:], surge_freq[2,:]; label = false)
+xaxis!(surge_interval, "Surge Level (meters)")
+yaxis!(surge_interval, "Frequency")
+vline!([returnlevel(fm, 100).value[]], label = "100-year")
+vline!([2.804], label = "Sea Wall Height")
+title!("Surge Frequencies at 0.25m intervals")
 
