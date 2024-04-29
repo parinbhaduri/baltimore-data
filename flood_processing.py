@@ -15,7 +15,7 @@ balt_bg = balt_bg.to_crs('epsg:4269')
 
 
 ## Read in surge data and convert to csv
-directory = "flood_inputs/FastFlood/Base"
+directory = "flood_inputs/FastFlood/Levee"
 
 #Extract surge level and create dataframe from first file
 file_0 = os.listdir(directory)[0]
@@ -33,20 +33,23 @@ x, y, extent = x.flatten(), y.flatten(), extent.flatten()
 surge_depths = gpd.GeoDataFrame(geometry=gpd.GeoSeries.from_xy(x, y, crs=band.rio.crs))
 surge_depths[surge_name] = extent
 
-# Repeat for remaining file and add to surge_depths
+# Repeat for remaining files and add to surge_depths
 band_dict = {}
 for filename in os.listdir(directory)[1:]:
-    raster = rx.open_rasterio(os.path.join(directory, filename))
-    #get first band of raster
-    band = raster[0]
-    extent = band.values.flatten()
+    if filename.endswith(".tif"):
+        raster = rx.open_rasterio(os.path.join(directory, filename))
+        #get first band of raster
+        band = raster[0]
+        extent = band.values.flatten()
 
-    #Extract return level from filename
-    surge_name = ""
-    surge_name = surge_name.join([*filename.split('_')[2]][0:3])
-    surge_name = str(int(surge_name)/100)
-    ##add to list
-    band_dict[surge_name] = extent
+        #Extract return level from filename
+        surge_name = ""
+        surge_name = surge_name.join([*filename.split('_')[2]][0:3])
+        surge_name = str(int(surge_name)/100)
+        ##add to list
+        band_dict[surge_name] = extent
+    else:
+        continue
 
 band_df = pd.DataFrame.from_dict(band_dict)
 surge_depths = pd.concat([surge_depths, band_df], axis = 1)
@@ -55,12 +58,17 @@ surge_depths = pd.concat([surge_depths, band_df], axis = 1)
 bg_flood_area = gpd.sjoin(balt_bg[["fid_1","GISJOIN","geometry"]], surge_depths)
 
 #determine whether max flood depth occurrence within each block group
-bg_flood_max = bg_flood_area.drop('geometry', axis = 1).groupby('GISJOIN').max()
+bg_flood_max = bg_flood_area.drop('geometry', axis = 1).groupby('GISJOIN', as_index = False).max()
 
 #Rejoin block group geometries
-balt_flood = balt_bg[["GISJOIN","geometry"]].merge(bg_flood_max, on='GISJOIN')
+#balt_flood = balt_bg[["GISJOIN","geometry"]].merge(bg_flood_max, on='GISJOIN')
 
-balt_flood.drop('index_right', axis = 1, inplace=True)
+balt_flood = bg_flood_max.drop('index_right', axis = 1)
+#Reorder columns so that surge level columns are in ascending order 
+surge_cols = [float(x) for x in balt_flood.columns[2:]]
+surge_cols.sort()
+new_cols = ['GISJOIN'] + ['fid_1'] + [str(x) for x in surge_cols]
+balt_flood = balt_flood[new_cols]
 
-#save dataframe to geojson
-balt_flood.to_file('model_inputs/surge_baltimore_base', driver = "GeoJSON")
+#save dataframe to csv
+balt_flood.to_csv('model_inputs/surge_baltimore_levee.csv')
