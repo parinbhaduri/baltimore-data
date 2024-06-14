@@ -211,9 +211,13 @@ dependencies:
     - aiosqlite==0.20.0
     - async-retriever==0.16.1
     - cffi==1.16.0
+    - contextily==1.6.0
     - cytoolz==0.12.3
     - frozenlist==1.4.1
+    - geographiclib==2.0
+    - geopy==2.4.1
     - itsdangerous==2.2.0
+    - mercantile==1.2.1
     - multidict==6.0.5
     - pycares==4.4.0
     - pycparser==2.22
